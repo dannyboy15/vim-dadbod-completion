@@ -85,12 +85,33 @@ let s:mysql = {
 \   'count_parser': function('s:count_parser', [1])
 \ }
 
+" may require BigQuery role that allows querying the INFORMATION_SCHEMA views
+" (e.g. BigQuery Admin)
+" Note: this incurs a min of 10MB of processing
+" https://cloud.google.com/bigquery/docs/information-schema-intro#pricing
+
+" TODO: make region dynamic
+" TODO: add feature to provide project id
+let s:bigquery = {
+\   'column_query': 'SELECT TABLE_NAME, COLUMN_NAME FROM `region-us`.INFORMATION_SCHEMA.COLUMNS ORDER BY COLUMN_NAME ASC',
+\   'count_column_query': 'SELECT COUNT(*) AS total FROM `region-us`.INFORMATION_SCHEMA.COLUMNS',
+\   'table_column_query': {table -> substitute('SELECT TABLE_NAME, COLUMN_NAME FROM `region-us`.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME={db_tbl_name}', '{db_tbl_name}', "'".table."'", '')},
+\   'schemas_query': 'SELECT TABLE_SCHEMA, TABLE_NAME FROM `region-us`.INFORMATION_SCHEMA.COLUMNS GROUP BY TABLE_SCHEMA, TABLE_NAME',
+\   'schemas_parser': function('s:map_and_filter', ['|']),
+\   'requires_stdin': v:true,
+\   'quote': ['`', '`'],
+\   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
+\   'column_parser': function('s:map_and_filter', ['|']),
+\   'count_parser': function('s:count_parser', [1])
+\ }
+
 let s:schemas = {
       \ 'postgres': s:postgres,
       \ 'postgresql': s:postgres,
       \ 'mysql': s:mysql,
       \ 'mariadb': s:mysql,
       \ 'oracle': s:oracle,
+      \ 'bigquery': s:bigquery,
       \ 'sqlite': {
       \   'args': ['-list'],
       \   'column_query': "SELECT m.name AS table_name, ii.name AS column_name FROM sqlite_schema AS m, pragma_table_list(m.name) AS il, pragma_table_info(il.name) AS ii WHERE m.type='table' ORDER BY column_name ASC;",
@@ -137,4 +158,3 @@ function! vim_dadbod_completion#schemas#get_quotes_rgx() abort
         \ 'close': escape(join(close, '\|'), '[]')
         \ }
 endfunction
-
