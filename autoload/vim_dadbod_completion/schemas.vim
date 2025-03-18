@@ -103,6 +103,7 @@ let s:bigquery = {
 \   'should_quote': function('s:should_quote', [['reserved_word', 'space']]),
 \   'column_parser': function('s:map_and_filter', ['|']),
 \   'count_parser': function('s:count_parser', [1])
+\}
 
 let s:clickhouse_base_column_query = "SELECT table AS TABLE_NAME, name AS COLUMN_NAME FROM system.columns"
 let s:clickhouse_query = s:clickhouse_base_column_query . " ORDER BY COLUMN_NAME ASC"
